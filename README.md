@@ -21,8 +21,6 @@ Open Core/Src/stm32h7xx_it.c
 
 Comment out the following interrupt handlers:
 
-c
-Copy
 /*
 void SVC_Handler(void) {
     // Must be handled by FreeRTOS

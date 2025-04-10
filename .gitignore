@@ -1,0 +1,17 @@
+# CubeIDE временные файлы
+Debug/
+Release/
+/**/.settings/
+.settings/
+.mxproject
+*.launch
+
+# Общие временные файлы
+*.o
+*.su
+*.lst
+*.map
+*.elf
+*.bin
+*.hex
+/.settings

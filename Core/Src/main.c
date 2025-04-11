@@ -80,7 +80,9 @@ DMA_HandleTypeDef hdma_usart3_tx;
 
 /* USER CODE BEGIN PV */
 
-TaskHandle_t xLedTaskHandle = NULL;
+TaskHandle_t xLedTaskHandle1 = NULL;
+TaskHandle_t xLedTaskHandle2 = NULL;
+TaskHandle_t xLedTaskHandle3 = NULL;
 
 /* USER CODE END PV */
 
@@ -96,7 +98,9 @@ static void MX_TIM2_Init(void);
 static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
-void vLedTask( void *pvParameters );
+void vLedTask1( void *pvParameters );
+void vLedTask2( void *pvParameters );
+void vLedTask3( void *pvParameters );
 void vApplicationMallocFailedHook(void);
 void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName);
 
@@ -147,7 +151,9 @@ int main(void)
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  xTaskCreate(vLedTask, "LED Blink", 128, NULL, 1, &xLedTaskHandle);
+  xTaskCreate(vLedTask1, "LED Blink1", 128, NULL, 1, &xLedTaskHandle1);
+  xTaskCreate(vLedTask2, "LED Blink2", 128, NULL, 1, &xLedTaskHandle2);
+  xTaskCreate(vLedTask3, "LED Blink3", 128, NULL, 1, &xLedTaskHandle3);
 
 
   /* USER CODE END 2 */
@@ -603,7 +609,7 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
     for(;;);
 }
 
-void vLedTask( void *pvParameters )
+void vLedTask1( void *pvParameters )
 {
     TickType_t xLastWakeTime;
     const TickType_t xFrequency = 1000 / portTICK_PERIOD_MS;
@@ -615,6 +621,44 @@ void vLedTask( void *pvParameters )
     {
         // Wait for the next cycle.
     	HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+
+        vTaskDelayUntil( &xLastWakeTime, xFrequency );
+
+        // Perform action here.
+    }
+}
+
+void vLedTask2( void *pvParameters )
+{
+    TickType_t xLastWakeTime;
+    const TickType_t xFrequency = 500 / portTICK_PERIOD_MS;
+
+    // Initialise the xLastWakeTime variable with the current time.
+    xLastWakeTime = xTaskGetTickCount();
+
+    for( ;; )
+    {
+        // Wait for the next cycle.
+    	HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_1);
+
+        vTaskDelayUntil( &xLastWakeTime, xFrequency );
+
+        // Perform action here.
+    }
+}
+
+void vLedTask3( void *pvParameters )
+{
+    TickType_t xLastWakeTime;
+    const TickType_t xFrequency = 250 / portTICK_PERIOD_MS;
+
+    // Initialise the xLastWakeTime variable with the current time.
+    xLastWakeTime = xTaskGetTickCount();
+
+    for( ;; )
+    {
+        // Wait for the next cycle.
+    	HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_14);
 
         vTaskDelayUntil( &xLastWakeTime, xFrequency );
 

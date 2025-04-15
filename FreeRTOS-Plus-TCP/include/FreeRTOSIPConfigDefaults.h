@@ -1431,7 +1431,7 @@ STATIC_ASSERT( ipconfigTCP_KEEP_ALIVE_INTERVAL <= ( portMAX_DELAY / configTICK_R
  */
 
 #ifndef ipconfigTCP_MSS
-    #define ipconfigTCP_MSS    ( ipconfigNETWORK_MTU - 40U )
+    #define ipconfigTCP_MSS    ( 1460 )
 #endif
 
 #if ( ipconfigTCP_MSS < 536 )

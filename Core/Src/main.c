@@ -33,6 +33,7 @@
 #include "FreeRTOS_Sockets.h"
 #include "FreeRTOS_IP_Private.h"
 #include "NetworkBufferManagement.h"
+#include "FreeRTOS_Routing.h"
 
 /* USER CODE END Includes */
 
@@ -93,6 +94,15 @@ TaskHandle_t xLedTaskHandle1 = NULL;
 TaskHandle_t xLedTaskHandle2 = NULL;
 TaskHandle_t xLedTaskHandle3 = NULL;
 
+static uint8_t ucMACAddress[ 6 ] = { configMAC_ADDR0, configMAC_ADDR1, configMAC_ADDR2, configMAC_ADDR3, configMAC_ADDR4, configMAC_ADDR5 };
+static const uint8_t ucIPAddress[ 4 ] = { configIP_ADDR0, configIP_ADDR1, configIP_ADDR2, configIP_ADDR3 };
+static const uint8_t ucNetMask[ 4 ] = { configNET_MASK0, configNET_MASK1, configNET_MASK2, configNET_MASK3 };
+static const uint8_t ucGatewayAddress[ 4 ] = { configGATEWAY_ADDR0, configGATEWAY_ADDR1, configGATEWAY_ADDR2, configGATEWAY_ADDR3 };
+const uint8_t ucDNSServerAddress[ 4 ] = { configDNS_SERVER_ADDR0, configDNS_SERVER_ADDR1, configDNS_SERVER_ADDR2, configDNS_SERVER_ADDR3 };
+
+NetworkInterface_t xInterfaces[10];
+NetworkEndPoint_t xEndPoints[10];
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -111,8 +121,17 @@ static void MX_RNG_Init(void);
 void vLedTask1( void *pvParameters );
 void vLedTask2( void *pvParameters );
 void vLedTask3( void *pvParameters );
+
 void vApplicationMallocFailedHook(void);
 void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName);
+
+eFrameProcessingResult_t eConsiderPacketForProcessing(const uint8_t *pucEthernetBuffer, size_t xBufferLength);
+uint32_t ulApplicationGetNextSequenceNumber(uint32_t ulSourceAddress, uint16_t usSourcePort, uint32_t ulDestinationAddress, uint16_t usDestinationPort);
+void vApplicationIPNetworkEventHook_Multi(eIPCallbackEvent_t eNetworkEvent, struct xNetworkEndPoint *pxEndPoint);
+void vApplicationPingReplyHook(ePingReplyStatus_t eStatus, uint16_t usIdentifier);
+BaseType_t xApplicationDNSQueryHook_Multi(struct xNetworkEndPoint * pxEndPoint, const char * pcName);
+BaseType_t xApplicationGetRandomNumber( uint32_t *pulValue );
+
 
 
 
@@ -167,9 +186,21 @@ int main(void)
   MX_RNG_Init();
   /* USER CODE BEGIN 2 */
 
-  xTaskCreate(vLedTask1, "LED Blink1", 128, NULL, 1, &xLedTaskHandle1);
-  xTaskCreate(vLedTask2, "LED Blink2", 128, NULL, 1, &xLedTaskHandle2);
-  xTaskCreate(vLedTask3, "LED Blink3", 128, NULL, 1, &xLedTaskHandle3);
+  pxSTM32_FillInterfaceDescriptor(0, &xInterfaces[0]);
+  FreeRTOS_FillEndPoint( &( xInterfaces[ 0 ] ), &( xEndPoints[ 0 ] ), ucIPAddress, ucNetMask, ucGatewayAddress, ucDNSServerAddress, ucMACAddress );
+
+  #if ( ipconfigUSE_DHCP != 0 )
+  {
+	  /* End-point 0 wants to use DHCPv4. */
+	  xEndPoints[ 0 ].bits.bWantDHCP = pdTRUE;
+  }
+  #endif /* ( ipconfigUSE_DHCP != 0 ) */
+
+  FreeRTOS_IPInit_Multi();
+
+  xTaskCreate(vLedTask1, "LED Blink1", 64, NULL, 1, &xLedTaskHandle1);
+  xTaskCreate(vLedTask2, "LED Blink2", 64, NULL, 1, &xLedTaskHandle2);
+  //xTaskCreate(vLedTask3, "LED Blink3", 64, NULL, 1, &xLedTaskHandle3);
 
 
   /* USER CODE END 2 */
@@ -653,6 +684,72 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
     /* Здесь можно добавить обработку ошибки */
     for(;;);
 }
+
+//------------------------------------------------------------------------------------------------------------------//
+/* Фильтрация входящих пакетов (можно разрешить или отклонить) */
+eFrameProcessingResult_t eConsiderPacketForProcessing(const uint8_t *pucEthernetBuffer, size_t xBufferLength)
+{
+    /* Разрешить все пакеты */
+    return eProcessBuffer;
+}
+
+/* Генерация начального TCP sequence number (можно использовать RNG) */
+uint32_t ulApplicationGetNextSequenceNumber(uint32_t ulSourceAddress, uint16_t usSourcePort, uint32_t ulDestinationAddress, uint16_t usDestinationPort)
+{
+	uint32_t ulReturn;
+	( void ) ulSourceAddress;
+	( void ) usSourcePort;
+	( void ) ulDestinationAddress;
+	( void ) usDestinationPort;
+	xApplicationGetRandomNumber( &ulReturn );
+
+	return ulReturn;
+}
+
+/* Обработчик сетевых событий */
+void vApplicationIPNetworkEventHook_Multi(eIPCallbackEvent_t eNetworkEvent, struct xNetworkEndPoint *pxEndPoint)
+{
+    switch (eNetworkEvent) {
+        case eNetworkUp:
+            /* Сеть поднята */
+        	HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_14);
+
+            break;
+
+        case eNetworkDown:
+            /* Сеть отключена */
+
+            break;
+
+        default:
+            break;
+    }
+}
+
+/* Обработка ответов на ping */
+void vApplicationPingReplyHook(ePingReplyStatus_t eStatus, uint16_t usIdentifier)
+{
+    if (eStatus == eSuccess)
+    {
+        //printf("Ping reply: ID=%u, Seq=%u, RTT=%lu ms\n", usIdentifier, usSequenceNumber, ulRoundTripTime);
+
+    } else
+    {
+        //printf("Ping failed!\n");
+
+    }
+}
+
+/* Фильтрация DNS-запросов */
+BaseType_t xApplicationDNSQueryHook_Multi(struct xNetworkEndPoint * pxEndPoint, const char * pcName)
+{
+    /* Разрешить все запросы */
+    return pdTRUE;
+}
+
+
+
+//------------------------------------------------------------------------------------------------------------------//
 
 BaseType_t xApplicationGetRandomNumber( uint32_t *pulValue )
 {

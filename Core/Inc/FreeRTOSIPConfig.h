@@ -42,6 +42,49 @@ extern "C" {
 
 #include "stm32h7xx_hal.h"
 
+/* Default MAC address configuration.  The demo creates a virtual network
+connection that uses this MAC address by accessing the raw Ethernet/WiFi data
+to and from a real network connection on the host PC.  See the
+configNETWORK_INTERFACE_TO_USE definition above for information on how to
+configure the real network connection to use. */
+
+
+#define configMAC_ADDR0		0x00
+#define configMAC_ADDR1		0x11
+#define configMAC_ADDR2		0x22
+#define configMAC_ADDR3		0x33
+#define configMAC_ADDR4		0x44
+#define configMAC_ADDR5		0x46
+
+/* Default IP address configuration.  Used in case ipconfigUSE_DHCP is set to 0, or
+ipconfigUSE_DHCP is set to 1 but a DHCP server cannot be contacted. */
+#define configIP_ADDR0		169
+#define configIP_ADDR1		254
+#define configIP_ADDR2		218
+#define configIP_ADDR3		70
+
+/* Default gateway IP address configuration.  Used in case ipconfigUSE_DHCP is
+set to 0, or ipconfigUSE_DHCP is set to 1 but a DHCP server cannot be contacted. */
+#define configGATEWAY_ADDR0	0
+#define configGATEWAY_ADDR1	0
+#define configGATEWAY_ADDR2	0
+#define configGATEWAY_ADDR3	0
+
+/* Default DNS server configuration.  OpenDNS addresses are 208.67.222.222 and
+208.67.220.220.  Used if ipconfigUSE_DHCP is set to 0, or ipconfigUSE_DHCP is set
+to 1 but a DHCP server cannot be contacted.*/
+#define configDNS_SERVER_ADDR0 	1
+#define configDNS_SERVER_ADDR1 	1
+#define configDNS_SERVER_ADDR2 	1
+#define configDNS_SERVER_ADDR3 	1
+
+/* Default netmask configuration.  Used in case ipconfigUSE_DHCP is set to 0,
+or ipconfigUSE_DHCP is set to 1 but a DHCP server cannot be contacted. */
+#define configNET_MASK0		255
+#define configNET_MASK1		255
+#define configNET_MASK2		0
+#define configNET_MASK3		0
+
 /* Define the byte order of the target MCU (the MCU FreeRTOS+TCP is executing
 on).  Valid options are pdFREERTOS_BIG_ENDIAN and pdFREERTOS_LITTLE_ENDIAN. */
 #define ipconfigBYTE_ORDER pdFREERTOS_LITTLE_ENDIAN //---------------------------------------------------------------
@@ -283,10 +326,10 @@ simultaneously, one could define TCP_WIN_SEG_COUNT as 120. */
 
 /* Each TCP socket has a circular buffers for Rx and Tx, which have a fixed
 maximum size.  Define the size of Rx buffer for TCP sockets. */
-#define ipconfigTCP_RX_BUFFER_LENGTH			( 4 * ipconfigTCP_MSS ) //---------------------------------------------------------------
+#define ipconfigTCP_RX_BUFFER_LENGTH			( 8 * ipconfigTCP_MSS ) //---------------------------------------------------------------
 
 /* Define the size of Tx buffer for TCP sockets. */
-#define ipconfigTCP_TX_BUFFER_LENGTH			( 4 * ipconfigTCP_MSS ) //---------------------------------------------------------------
+#define ipconfigTCP_TX_BUFFER_LENGTH			( 8 * ipconfigTCP_MSS ) //---------------------------------------------------------------
 
 /* When using call-back handlers, the driver may check if the handler points to
 real program memory (RAM or flash) or just has a random non-zero value. */
